@@ -38,9 +38,9 @@ If you already have another terminal application you like to use, such as the te
 Once you have a terminal open, make sure everything is working by typing (or copy-pasting) the following `mvn` command into the terminal and pressing the `Enter` key:
 
 ```
-mvn test -Dtest=WebCrawlerTest "-DcrawlerImplementations=com.udacity.webcrawler.SequentialWebCrawler" it needs the double quotes for it work
+mvn test -Dtest=WebCrawlerTest "-DcrawlerImplementations=com.udacity.webcrawler.SequentialWebCrawler"
 ```
-
+ There was an error with the command line above, it needs the double quotes for it work.
 _(In case you're wondering, "mvn" is short for "Maven". This command tells Maven to run the unit test named `WebCrawlerTest`, and uses a command-line flag to set the system property `crawlerImplementations` to "com.udacity.webcrawler.SequentialWebCrawler".)_
 
 If it worked, you should see something like this at the bottom of the terminal:
