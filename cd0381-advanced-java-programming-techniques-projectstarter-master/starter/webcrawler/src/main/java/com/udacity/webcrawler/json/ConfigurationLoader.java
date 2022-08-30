@@ -2,20 +2,19 @@ package com.udacity.webcrawler.json;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
-import java.net.URI;
 import java.io.File;
 import java.io.FileReader;
 import java.nio.file.Files;
-import java.nio.file.FileSystems;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.io.*;
 import java.io.StringReader;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import javax.json.stream;
 /**
  * A static utility class that loads a JSON configuration file.
  */
@@ -39,13 +38,14 @@ public final class ConfigurationLoader {
     // TODO: Fill in this method.
       String stringjson = "";
       Reader reader1 = null;
-    try(BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)){
+      ClassLoader classLoader = getClass().getClassLoader();
+      File file = new File(classLoader.getResource(path.toString()).getFile());
+    try(BufferedReader reader = new BufferedReader(new FileReader(file))){
         StringBuilder stringBuilder = new StringBuilder();
        String data = reader.readLine();
      while((data)!=null){
          stringBuilder.append(data);
        data = reader.readLine();
-
      }
      stringjson = stringBuilder.toString();
      reader1 = new StringReader(stringjson);
@@ -69,13 +69,21 @@ public final class ConfigurationLoader {
   public static CrawlerConfiguration read(Reader reader){
     // This is here to get rid of the unused variable warning.
    // Objects.requireNonNull(reader);
-    ObjectMapper objectMapper = new ObjectMapper();
-    CrawlerConfiguration crawlerConfiguration = null;
-    // TODO: Fill in this method
-    try(reader){
-      objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false);
-      crawlerConfiguration = objectMapper.readValue(reader, CrawlerConfiguration.class);
 
+    CrawlerConfiguration crawlerConfiguration = null;
+    JsonFactory factory = new JsonFactory();
+    factory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE,false);
+    ObjectMapper objectMapper = new ObjectMapper(factory);
+    // TODO: Fill in this method
+    try(JsonParserFactory parserFactory = Json.createParserfactory();
+        JsonParser parser = parserFactory.createParser(reader)){
+        while(parser.hasNext()) {
+            JsonParser.Event event = parser.next();
+            event = parser.next();
+            event = parser.next();
+        }
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false);
+        crawlerConfiguration = objectMapper.readValue(parser.toString(), CrawlerConfiguration.class);
         /*  crawlerConfiguration.getParallelism();
           crawlerConfiguration.getImplementationOverride();
           crawlerConfiguration.getMaxDepth();
