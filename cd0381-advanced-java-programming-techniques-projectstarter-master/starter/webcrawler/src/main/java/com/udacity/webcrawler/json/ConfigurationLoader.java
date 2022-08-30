@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
-import javax.json.stream;
+import com.fasterxml.jackson.core.JsonToken;
 /**
  * A static utility class that loads a JSON configuration file.
  */
@@ -75,33 +75,62 @@ public final class ConfigurationLoader {
     factory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE,false);
     ObjectMapper objectMapper = new ObjectMapper(factory);
     // TODO: Fill in this method
-    try(JsonParserFactory parserFactory = Json.createParserfactory();
-        JsonParser parser = parserFactory.createParser(reader)){
-        while(parser.hasNext()) {
-            JsonParser.Event event = parser.next();
-            event = parser.next();
-            event = parser.next();
-        }
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,false);
-        crawlerConfiguration = objectMapper.readValue(parser.toString(), CrawlerConfiguration.class);
-        /*  crawlerConfiguration.getParallelism();
-          crawlerConfiguration.getImplementationOverride();
-          crawlerConfiguration.getMaxDepth();
-          crawlerConfiguration.getTimeout();
-          crawlerConfiguration.getPopularWordCount();
-          crawlerConfiguration.getProfileOutputPath();
-          crawlerConfiguration.getResultPath();
+    try(JsonParser parser = factory.createParser(reader)){
+        while(!parser.isClosed()) {
+            JsonToken jsonToken = parser.nextToken();
+            if(!JsonToken.END_OBJECT.equals(jsonToken)){
+                if(JsonToken.FIELD_NAME.equals(jsonToken)){
+                    String fieldname = parser.getCurrentName();
+                    if(crawlerConfiguration.getStartPages().equals(fieldname)) {
+                        jsonToken = parser.nextToken();
+                        if (!JsonToken.END_ARRAY.equals(jsonToken)) {
+                            //parser.getValueAsString()=crawlerConfiguration.getStartPages();
+                        }
+                    }
+                       else if(crawlerConfiguration.getIgnoredUrls().equals(fieldname)){
+                            jsonToken = parser.nextToken();
+                            if(!JsonToken.END_ARRAY.equals(jsonToken)){
+                             //  parser.getValueAsString()= crawlerConfiguration.getIgnoredUrls();
+                            }
+                    }else if(crawlerConfiguration.getIgnoredWords().equals(fieldname)) {
+                             jsonToken = parser.nextToken();
+                        if (!JsonToken.END_ARRAY.equals(jsonToken)) {
+                           //parser.getValueAsString()= crawlerConfiguration.getIgnoredWords();
+                        }
+                    } else if (crawlerConfiguration.getParallelism().equals(fieldname)) {
+                        jsonToken = parser.nextToken();
+                         //parser.getValueAsInt()=crawlerConfiguration.getParallelism();
 
-        for (int i = 0; i <crawlerConfiguration.getStartPages().size(); i++) {
-            crawlerConfiguration.getStartPages().get(i);
+                    } else if (crawlerConfiguration.getImplementationOverride().equals(fieldname)) {
+                        jsonToken = parser.nextToken();
+                       //parser.getValueAsString()= crawlerConfiguration.getImplementationOverride();
 
+                    } else if ( crawlerConfiguration.getMaxDepth().equals(fieldname)) {
+                        jsonToken = parser.nextToken();
+                        // parser.getValueAsInt()=crawlerConfiguration.getMaxDepth();
+
+                    } else if (crawlerConfiguration.getTimeout().equals(fieldname)) {
+                        jsonToken = parser.nextToken();
+                        //parser.getValueAsInt()=crawlerConfiguration.getTimeout();
+
+                    } else if (crawlerConfiguration.getPopularWordCount().equals(fieldname)) {
+                        jsonToken = parser.nextToken();
+                        //parser.getValueAsInt()= crawlerConfiguration.getPopularWordCount();
+
+                    } else if (crawlerConfiguration.getProfileOutputPath().equals(fieldname)) {
+                        jsonToken = parser.nextToken();
+                        //parser.getValueAsString()=crawlerConfiguration.getProfileOutputPath();
+                    } else if (crawlerConfiguration.getResultPath().equals(fieldname)) {
+                        jsonToken = parser.nextToken();
+                      // parser.getValueAsString()= crawlerConfiguration.getResultPath();
+                    }
+                }
+            }
+
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            crawlerConfiguration = objectMapper.readValue(parser, CrawlerConfiguration.class);
         }
-        for (int i = 0; i <crawlerConfiguration.getIgnoredUrls().size(); i++) {
-            crawlerConfiguration.getIgnoredUrls().get(i);
-        }
-        for (int i = 0; i <crawlerConfiguration.getIgnoredWords().size(); i++) {
-            crawlerConfiguration.getIgnoredWords().get(i);
-        }*/
+
     }catch (JsonMappingException e){
       e.printStackTrace();
     }catch (IOException e){
