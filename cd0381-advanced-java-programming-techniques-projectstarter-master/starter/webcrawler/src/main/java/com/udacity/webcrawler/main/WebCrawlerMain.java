@@ -1,5 +1,4 @@
 package com.udacity.webcrawler.main;
-
 import com.google.inject.Guice;
 import com.udacity.webcrawler.WebCrawler;
 import com.udacity.webcrawler.WebCrawlerModule;
@@ -15,7 +14,10 @@ import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
+import java.io.*;
+import java.io.File;
 
 public final class WebCrawlerMain {
 
@@ -36,6 +38,14 @@ public final class WebCrawlerMain {
 
     CrawlResult result = crawler.crawl(config.getStartPages());
     CrawlResultWriter resultWriter = new CrawlResultWriter(result);
+    Path path = Paths.get(config.getResultPath());
+    File file = new File(path.toString());
+    if(file.exists()){
+      resultWriter.write(path);
+    }else{
+      OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(path.toString()));
+      resultWriter.write(writer);
+    }
     // TODO: Write the crawl results to a JSON file (or System.out if the file name is empty)
     // TODO: Write the profile data to a text file (or System.out if the file name is empty)
   }
