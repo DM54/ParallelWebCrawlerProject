@@ -49,14 +49,11 @@ public final class ConfigurationLoader {
      }
      stringjson = stringBuilder.toString();
      reader1 = new StringReader(stringjson);
-     //read(reader1);
-
     }
     catch(IOException e){
       e.printStackTrace();
     }
     return read(reader1);
-   //return new CrawlerConfiguration.Builder().build();
   }
 
   /**
@@ -76,60 +73,9 @@ public final class ConfigurationLoader {
     ObjectMapper objectMapper = new ObjectMapper(factory);
     // TODO: Fill in this method
     try(JsonParser parser = factory.createParser(reader)){
-        while(!parser.isClosed()) {
-            JsonToken jsonToken = parser.nextToken();
-            if(!JsonToken.END_OBJECT.equals(jsonToken)){
-                if(JsonToken.FIELD_NAME.equals(jsonToken)){
-                    String fieldname = parser.getCurrentName();
-                    if(crawlerConfiguration.getStartPages().equals(fieldname)) {
-                        jsonToken = parser.nextToken();
-                        if (!JsonToken.END_ARRAY.equals(jsonToken)) {
-                            //parser.getValueAsString()=crawlerConfiguration.getStartPages();
-                        }
-                    }
-                       else if(crawlerConfiguration.getIgnoredUrls().equals(fieldname)){
-                            jsonToken = parser.nextToken();
-                            if(!JsonToken.END_ARRAY.equals(jsonToken)){
-                             //  parser.getValueAsString()= crawlerConfiguration.getIgnoredUrls();
-                            }
-                    }else if(crawlerConfiguration.getIgnoredWords().equals(fieldname)) {
-                             jsonToken = parser.nextToken();
-                        if (!JsonToken.END_ARRAY.equals(jsonToken)) {
-                           //parser.getValueAsString()= crawlerConfiguration.getIgnoredWords();
-                        }
-                    } else if (crawlerConfiguration.getParallelism().equals(fieldname)) {
-                        jsonToken = parser.nextToken();
-                         //parser.getValueAsInt()=crawlerConfiguration.getParallelism();
 
-                    } else if (crawlerConfiguration.getImplementationOverride().equals(fieldname)) {
-                        jsonToken = parser.nextToken();
-                       //parser.getValueAsString()= crawlerConfiguration.getImplementationOverride();
-
-                    } else if ( crawlerConfiguration.getMaxDepth().equals(fieldname)) {
-                        jsonToken = parser.nextToken();
-                        // parser.getValueAsInt()=crawlerConfiguration.getMaxDepth();
-
-                    } else if (crawlerConfiguration.getTimeout().equals(fieldname)) {
-                        jsonToken = parser.nextToken();
-                        //parser.getValueAsInt()=crawlerConfiguration.getTimeout();
-
-                    } else if (crawlerConfiguration.getPopularWordCount().equals(fieldname)) {
-                        jsonToken = parser.nextToken();
-                        //parser.getValueAsInt()= crawlerConfiguration.getPopularWordCount();
-
-                    } else if (crawlerConfiguration.getProfileOutputPath().equals(fieldname)) {
-                        jsonToken = parser.nextToken();
-                        //parser.getValueAsString()=crawlerConfiguration.getProfileOutputPath();
-                    } else if (crawlerConfiguration.getResultPath().equals(fieldname)) {
-                        jsonToken = parser.nextToken();
-                      // parser.getValueAsString()= crawlerConfiguration.getResultPath();
-                    }
-                }
-            }
-
-            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            crawlerConfiguration = objectMapper.readValue(parser, CrawlerConfiguration.class);
-        }
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        crawlerConfiguration = objectMapper.readValue(parser, CrawlerConfiguration.class);
 
     }catch (JsonMappingException e){
       e.printStackTrace();
@@ -137,6 +83,5 @@ public final class ConfigurationLoader {
       e.printStackTrace();
     }
     return  crawlerConfiguration;
-    //return new CrawlerConfiguration.Builder().build();
   }
 }
