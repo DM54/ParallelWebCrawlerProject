@@ -1,9 +1,15 @@
 package com.udacity.webcrawler.json;
-
 import java.io.Writer;
 import java.nio.file.Path;
 import java.util.Objects;
-
+import java.io.IOException;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.File;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.core.JsonGenerator;
 /**
  * Utility class to write a {@link CrawlResult} to file.
  */
@@ -26,9 +32,20 @@ public final class CrawlResultWriter {
    * @param path the file path where the crawl result data should be written.
    */
   public void write(Path path) {
-    // This is here to get rid of the unused variable warning.
-    Objects.requireNonNull(path);
-    // TODO: Fill in this method.
+
+     try(BufferedWriter writertofile = new BufferedWriter(new FileWriter(path.toString()))){
+       File file = new File(path.toString());
+       if(file.exists()){
+         write(writertofile);
+       }else {
+         file.createNewFile();
+       }
+
+     }catch (IOException e){
+       e.printStackTrace();
+     }
+
+
   }
 
   /**
@@ -37,8 +54,18 @@ public final class CrawlResultWriter {
    * @param writer the destination where the crawl result data should be written.
    */
   public void write(Writer writer) {
-    // This is here to get rid of the unused variable warning.
-    Objects.requireNonNull(writer);
-    // TODO: Fill in this method.
+    JsonFactory factory = new JsonFactory();
+    factory.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET,false);
+    ObjectMapper objectMapper = new ObjectMapper(factory);
+    try(JsonGenerator jsonGenerator = factory.createGenerator(writer)){
+
+       objectMapper.writeValue(jsonGenerator, result);
+
+    }catch (JsonMappingException e){
+      e.printStackTrace();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
+
   }
 }
