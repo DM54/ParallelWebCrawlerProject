@@ -2,6 +2,8 @@ package com.udacity.webcrawler.json;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.util.Objects;
 import java.io.FileReader;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,16 +35,18 @@ public final class ConfigurationLoader {
    */
   public CrawlerConfiguration load() {
       String stringjson = "";
-      Reader reader1 = new StringReader(stringjson);
+      Reader reader1 = null;
+     // Reader r1 = null;
     try(BufferedReader reader = new BufferedReader(new FileReader(path.toString()))){
-       String data = reader.readLine();
+
+       String data;
        StringBuilder stringBuilder = new StringBuilder();
-     while((data)!=null){
+       while((data = reader.readLine())!=null){
        data = reader.readLine();
        stringBuilder.append(data);
        stringjson = stringBuilder.toString();
        reader1 = new StringReader(stringjson);
-     }
+      }
 
     }
     catch(IOException e){
@@ -65,10 +69,13 @@ public final class ConfigurationLoader {
     ObjectMapper objectMapper = new ObjectMapper(factory);
     try(JsonParser parser = factory.createParser(reader)){
 
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
-        objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT,true);
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
+       // objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
+        objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
         crawlerConfiguration = objectMapper.readValue(parser, CrawlerConfiguration.class);
+
+
 
     }catch (JsonMappingException e){
       e.printStackTrace();

@@ -46,8 +46,7 @@ public final class WebCrawlerMain {
     if(file.exists()){
       resultWriter.write(path);
     }else{
-      try(OutputStream fileOutputStream = new FileOutputStream(path.toString());
-              Writer outputStream = new OutputStreamWriter(fileOutputStream)){
+      try(Writer outputStream = new BufferedWriter(new OutputStreamWriter(System.out))){
         resultWriter.write(outputStream);
       }catch (IOException e){
         e.printStackTrace();
