@@ -33,12 +33,15 @@ public final class ConfigurationLoader {
    */
   public CrawlerConfiguration load() {
       String stringjson = "";
-      Reader reader1 = null;
+      Reader reader1 = new StringReader(stringjson);
     try(BufferedReader reader = new BufferedReader(new FileReader(path.toString()))){
        String data = reader.readLine();
+       StringBuilder stringBuilder = new StringBuilder();
      while((data)!=null){
        data = reader.readLine();
-       reader1 = new StringReader(data);
+       stringBuilder.append(data);
+       stringjson = stringBuilder.toString();
+       reader1 = new StringReader(stringjson);
      }
 
     }
@@ -63,6 +66,8 @@ public final class ConfigurationLoader {
     try(JsonParser parser = factory.createParser(reader)){
 
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+        objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT,true);
         crawlerConfiguration = objectMapper.readValue(parser, CrawlerConfiguration.class);
 
     }catch (JsonMappingException e){

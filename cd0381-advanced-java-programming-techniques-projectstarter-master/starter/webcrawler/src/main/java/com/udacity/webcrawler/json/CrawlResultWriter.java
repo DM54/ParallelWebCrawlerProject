@@ -32,11 +32,13 @@ public final class CrawlResultWriter {
    * @param path the file path where the crawl result data should be written.
    */
   public void write(Path path) {
-
-     try(BufferedWriter writertofile = new BufferedWriter(new FileWriter(path.toString()))){
+      //append to a existing file it should have second parameter as true in FileWriter.
+     try(BufferedWriter writertofile = new BufferedWriter(new FileWriter(path.toString(), true))){
        File file = new File(path.toString());
+       String data = " ";
        if(file.exists()){
-         write(writertofile);
+         writertofile.write(data);
+         //write(writertofile);
        }else {
          file.createNewFile();
        }
@@ -60,6 +62,8 @@ public final class CrawlResultWriter {
     try(JsonGenerator jsonGenerator = factory.createGenerator(writer)){
 
        objectMapper.writeValue(jsonGenerator, result);
+       String resultjson = objectMapper.writeValueAsString(result);
+       System.out.println(resultjson);
 
     }catch (JsonMappingException e){
       e.printStackTrace();
