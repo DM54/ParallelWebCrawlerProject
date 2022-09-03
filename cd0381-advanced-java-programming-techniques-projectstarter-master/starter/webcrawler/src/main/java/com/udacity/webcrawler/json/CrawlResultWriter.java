@@ -51,8 +51,6 @@ public final class CrawlResultWriter {
      }catch (IOException e){
        e.printStackTrace();
      }
-
-
   }
 
   /**

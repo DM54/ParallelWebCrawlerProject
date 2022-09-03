@@ -34,25 +34,22 @@ public final class ConfigurationLoader {
    * @return the loaded {@link CrawlerConfiguration}.
    */
   public CrawlerConfiguration load() {
-      String stringjson = "";
-      Reader reader1 = null;
-     // Reader r1 = null;
+      CrawlerConfiguration crawlerConfiguration = null;
+      JsonFactory factory = new JsonFactory();
+      factory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE,false);
+      ObjectMapper objectMapper = new ObjectMapper(factory);
     try(BufferedReader reader = new BufferedReader(new FileReader(path.toString()))){
-
-       String data;
-       StringBuilder stringBuilder = new StringBuilder();
-       while((data = reader.readLine())!=null){
-       data = reader.readLine();
-       stringBuilder.append(data);
-       stringjson = stringBuilder.toString();
-       reader1 = new StringReader(stringjson);
-      }
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
+        // objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
+        objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
+        crawlerConfiguration = objectMapper.readValue(reader, CrawlerConfiguration.class);
 
     }
     catch(IOException e){
       e.printStackTrace();
     }
-    return read(reader1);
+    return crawlerConfiguration;
   }
 
   /**
