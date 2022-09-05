@@ -63,11 +63,7 @@ public final class CrawlResultWriter {
     factory.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET,false);
     ObjectMapper objectMapper = new ObjectMapper(factory);
     try(JsonGenerator jsonGenerator = factory.createGenerator(writer)){
-      // objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
        objectMapper.writeValue(jsonGenerator, result);
-       String resultjson = objectMapper.writeValueAsString(result);
-       System.out.println(resultjson);
-
     }catch (JsonMappingException e){
       e.printStackTrace();
     }catch (IOException e){

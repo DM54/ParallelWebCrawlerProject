@@ -41,7 +41,6 @@ public final class ConfigurationLoader {
     try(BufferedReader reader = new BufferedReader(new FileReader(path.toString()))){
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
-        // objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
         objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
         crawlerConfiguration = objectMapper.readValue(reader, CrawlerConfiguration.class);
 
