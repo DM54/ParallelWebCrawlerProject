@@ -44,16 +44,11 @@ final class WordCounts {
    List<Map.Entry<String, Integer>> sortedCounts = wordCounts.entrySet()
             .stream()
             .sorted(new WordCountComparator())
-                    //collecting into queue sortedcounts
+                    //collecting into list sortedcounts
             .collect(Collectors.toList());
-
-   List<Map.Entry<String, Integer>> integerMap = sortedCounts.stream()
-              .filter(i->sortedCounts.indexOf(i)<Math.min(popularWordCount,wordCounts.size()))
-              .collect(Collectors.toList());
-
-
-    Map<String, Integer> topCounts = integerMap
+   Map<String, Integer> topCounts = sortedCounts
             .stream()
+            .filter(i->sortedCounts.indexOf(i)<Math.min(popularWordCount,wordCounts.size()))
             .collect(Collectors.toMap(
                     Map.Entry::getKey,
                     Map.Entry::getValue,
