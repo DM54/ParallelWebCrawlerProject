@@ -1,16 +1,20 @@
 package com.udacity.webcrawler;
 
 import com.udacity.webcrawler.json.CrawlResult;
-
+import com.udacity.webcrawler.CustomRecursiveAction;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
@@ -27,28 +31,71 @@ final class ParallelWebCrawler implements WebCrawler {
   private final int popularWordCount;
   private final ForkJoinPool pool;
   private final PageParserFactory parserFactory;
+  private final int maxDepth;
+  private final  List<Pattern> ignoredUrls;
 
   @Inject
   ParallelWebCrawler(
-      Clock clock,
-      @Timeout Duration timeout,
-      @PopularWordCount int popularWordCount,
-      @TargetParallelism int threadCount, PageParserFactory parserFactory) {
+          Clock clock,
+          @Timeout Duration timeout,
+          @PopularWordCount int popularWordCount,
+          @TargetParallelism int threadCount, PageParserFactory parserFactory, @MaxDepth int maxDepth, @IgnoredUrls List<Pattern> ignoredUrls) {
     this.clock = clock;
     this.timeout = timeout;
     this.popularWordCount = popularWordCount;
     this.pool = new ForkJoinPool(Math.min(threadCount, getMaxParallelism()));
     this.parserFactory = parserFactory;
+    this.maxDepth = maxDepth;
+    this.ignoredUrls=ignoredUrls;
   }
 
   @Override
   public CrawlResult crawl(List<String> startingUrls) {
-   //downloads and parse webpages.
-//   PageParser.Result result = parserFactory.get(startingUrls).parse();
+
+    Instant deadline = clock.instant().plus(timeout);
+    Map<String, Integer> counts = new HashMap<>();
+    Set<String> visitedUrls = new HashSet<>();
+    urlscheck(startingUrls);
+    for (String url : startingUrls) {
+      //downloads and parse webpages.
+      PageParser.Result result = parserFactory.get(url).parse();
+      for (String resultlinks : result.getLinks()) {
+        pool.invoke(new CustomRecursiveAction(resultlinks, deadline, maxDepth, counts, visitedUrls));
+      }
+    }
+
+    if (counts.isEmpty()) {
+      return new CrawlResult.Builder()
+              .setWordCounts(counts)
+              .setUrlsVisited(visitedUrls.size())
+              .build();
+    }
+
+    return new CrawlResult.Builder()
+            .setWordCounts(WordCounts.sort(counts, popularWordCount))
+            .setUrlsVisited(visitedUrls.size())
+            .build();
+  }
 
 
+  public void urlscheck(List<String> startingUrls) {
+    Instant deadline = clock.instant().plus(timeout);
+    Set<String> visitedUrls = new HashSet<>();
+    if (maxDepth == 0 || clock.instant().isAfter(deadline)) {
+      return;
+    }
 
-    return new CrawlResult.Builder().build();
+    for (String url : startingUrls) {
+      if (visitedUrls.contains(url)) {
+        return;
+      }
+      visitedUrls.add(url);
+      for (Pattern pattern : ignoredUrls) {
+        if (pattern.matcher(url).matches()) {
+          return;
+        }
+      }
+    }
   }
 
   @Override
