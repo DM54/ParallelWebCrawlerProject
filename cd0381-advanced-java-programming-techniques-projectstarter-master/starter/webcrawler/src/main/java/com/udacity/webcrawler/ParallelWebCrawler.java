@@ -20,6 +20,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import com.udacity.webcrawler.parser.PageParserFactory;
 import com.udacity.webcrawler.parser.PageParser;
+import java.util.concurrent.*;
 
 /**
  * A concrete implementation of {@link WebCrawler} that runs multiple threads on a
@@ -53,17 +54,31 @@ final class ParallelWebCrawler implements WebCrawler {
   public CrawlResult crawl(List<String> startingUrls) {
 
     Instant deadline = clock.instant().plus(timeout);
-    Map<String, Integer> counts = new HashMap<>();
-    Set<String> visitedUrls = new HashSet<>();
+    Map<String, Integer> counts = new ConcurrentHashMap<>();
+    Set<String> visitedUrls = Collections.synchronizedSet(new HashSet<>());
     urlscheck(startingUrls);
+
     for (String url : startingUrls) {
-      //downloads and parse webpages.
+      CustomRecursiveAction task1 = new CustomRecursiveAction(url,deadline,maxDepth,counts,visitedUrls);
       PageParser.Result result = parserFactory.get(url).parse();
-      for (String resultlinks : result.getLinks()) {
-        pool.invoke(new CustomRecursiveAction(resultlinks, deadline, maxDepth, counts, visitedUrls));
+      //downloads and parse webpages.
+      for (Map.Entry<String, Integer> e : result.getWordCounts().entrySet()) {
+        if (counts.containsKey(e.getKey())) {
+          counts.put(e.getKey(), e.getValue() + counts.get(e.getKey()));
+          task1= new CustomRecursiveAction(url,deadline,maxDepth,counts,visitedUrls);
+
+        } else {
+          counts.put(e.getKey(), e.getValue());
+          task1= new CustomRecursiveAction(url,deadline,maxDepth,counts,visitedUrls);
+        }
       }
+      for (String resultlinks : result.getLinks()) {
+        task1= new CustomRecursiveAction(resultlinks,deadline,maxDepth,counts,visitedUrls);
+      }
+      pool.invoke(task1);
     }
 
+    pool.shutdown();
     if (counts.isEmpty()) {
       return new CrawlResult.Builder()
               .setWordCounts(counts)
@@ -80,7 +95,7 @@ final class ParallelWebCrawler implements WebCrawler {
 
   public void urlscheck(List<String> startingUrls) {
     Instant deadline = clock.instant().plus(timeout);
-    Set<String> visitedUrls = new HashSet<>();
+    Set<String> visitedUrls = Collections.synchronizedSet(new HashSet<>());
     if (maxDepth == 0 || clock.instant().isAfter(deadline)) {
       return;
     }
