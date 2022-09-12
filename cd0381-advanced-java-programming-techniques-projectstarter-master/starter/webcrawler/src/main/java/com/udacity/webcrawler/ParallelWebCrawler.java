@@ -33,7 +33,7 @@ final class ParallelWebCrawler implements WebCrawler {
   private final ForkJoinPool pool;
   private final PageParserFactory parserFactory;
   private final int maxDepth;
-  private final  List<Pattern> ignoredUrls;
+  private final List<Pattern> ignoredUrls;
 
   @Inject
   ParallelWebCrawler(
@@ -47,38 +47,18 @@ final class ParallelWebCrawler implements WebCrawler {
     this.pool = new ForkJoinPool(Math.min(threadCount, getMaxParallelism()));
     this.parserFactory = parserFactory;
     this.maxDepth = maxDepth;
-    this.ignoredUrls=ignoredUrls;
+    this.ignoredUrls = ignoredUrls;
   }
 
   @Override
   public CrawlResult crawl(List<String> startingUrls) {
-
     Instant deadline = clock.instant().plus(timeout);
     Map<String, Integer> counts = new ConcurrentHashMap<>();
     Set<String> visitedUrls = Collections.synchronizedSet(new HashSet<>());
-    urlscheck(startingUrls);
-
-    for (String url : startingUrls) {
-      CustomRecursiveAction task1 = new CustomRecursiveAction(url,deadline,maxDepth,counts,visitedUrls);
-      PageParser.Result result = parserFactory.get(url).parse();
-      //downloads and parse webpages.
-      for (Map.Entry<String, Integer> e : result.getWordCounts().entrySet()) {
-        if (counts.containsKey(e.getKey())) {
-          counts.put(e.getKey(), e.getValue() + counts.get(e.getKey()));
-          task1= new CustomRecursiveAction(url,deadline,maxDepth,counts,visitedUrls);
-
-        } else {
-          counts.put(e.getKey(), e.getValue());
-          task1= new CustomRecursiveAction(url,deadline,maxDepth,counts,visitedUrls);
-        }
+      for (String link : startingUrls) {
+        pool.invoke(new CustomRecursiveAction(link,deadline,maxDepth,counts,visitedUrls));
       }
-      for (String resultlinks : result.getLinks()) {
-        task1= new CustomRecursiveAction(resultlinks,deadline,maxDepth,counts,visitedUrls);
-      }
-      pool.invoke(task1);
-    }
 
-    pool.shutdown();
     if (counts.isEmpty()) {
       return new CrawlResult.Builder()
               .setWordCounts(counts)
@@ -92,26 +72,6 @@ final class ParallelWebCrawler implements WebCrawler {
             .build();
   }
 
-
-  public void urlscheck(List<String> startingUrls) {
-    Instant deadline = clock.instant().plus(timeout);
-    Set<String> visitedUrls = Collections.synchronizedSet(new HashSet<>());
-    if (maxDepth == 0 || clock.instant().isAfter(deadline)) {
-      return;
-    }
-
-    for (String url : startingUrls) {
-      if (visitedUrls.contains(url)) {
-        return;
-      }
-      visitedUrls.add(url);
-      for (Pattern pattern : ignoredUrls) {
-        if (pattern.matcher(url).matches()) {
-          return;
-        }
-      }
-    }
-  }
 
   @Override
   public int getMaxParallelism() {
