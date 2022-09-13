@@ -59,7 +59,7 @@ final class ParallelWebCrawler implements WebCrawler {
     for (String url : startingUrls) {
       pool.invoke(new CustomRecursiveAction(clock,timeout,url, deadline, maxDepth, counts, visitedUrls,parserFactory,ignoredUrls));
     }
-
+    pool.shutdown();
     if (counts.isEmpty()) {
       return new CrawlResult.Builder()
               .setWordCounts(counts)
