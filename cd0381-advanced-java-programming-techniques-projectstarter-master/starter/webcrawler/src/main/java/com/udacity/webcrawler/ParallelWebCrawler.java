@@ -53,8 +53,8 @@ final class ParallelWebCrawler implements WebCrawler {
   @Override
   public CrawlResult crawl(List<String> startingUrls) {
     Instant deadline = clock.instant().plus(timeout);
-    Map<String, Integer> counts = new ConcurrentHashMap<>();
-    Set<String> visitedUrls = Collections.synchronizedSet(new HashSet<>());
+    Map<String, Integer> counts = new HashMap<>();
+    Set<String> visitedUrls = new HashSet<>();
 
     for (String url : startingUrls) {
       pool.invoke(new CustomRecursiveAction(clock,timeout,url, deadline, maxDepth, counts, visitedUrls,parserFactory,ignoredUrls));

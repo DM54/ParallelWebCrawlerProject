@@ -41,21 +41,10 @@ final class CustomRecursiveAction extends RecursiveAction {
 
     @Override
     protected void compute() {
-        /**
-         * UrlsVisited output should not count twice in the same crawl.
-         * might need Collections.synchronizedCollection or java.util.concurrent
-         * Reminder: think carefully about which methods are and are not atomic
-         * and what guarantees those method provides.
-         */
 
         //downloads and parse webpages.
         List<CustomRecursiveAction> subTask = new ArrayList<>();
 
-        /**wordCount Map -> might need Collections.synchronization or concurrentHashmap?
-         * to avoid counting the results twice from the same page.
-         * Reminder: that the crawler will be downloading and processing multiple webpages at the same time.
-         *
-         */
         List<CustomRecursiveAction> subtasks = new ArrayList<>();
         ReentrantLock lock = new ReentrantLock();
         try {
