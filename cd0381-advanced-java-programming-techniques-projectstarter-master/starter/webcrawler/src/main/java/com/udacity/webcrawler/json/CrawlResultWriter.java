@@ -5,8 +5,8 @@ import java.util.Objects;
 import java.io.IOException;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.File;
-import java.io.FileReader;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -34,20 +34,10 @@ public final class CrawlResultWriter {
    * @param path the file path where the crawl result data should be written.
    */
   public void write(Path path) {
-    JsonFactory factory = new JsonFactory();
-    factory.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET,false);
-    ObjectMapper objectMapper = new ObjectMapper(factory);
-    //append to a existing file it should have second parameter as true in FileWriter.
-     try(BufferedWriter writertofile = new BufferedWriter(new FileWriter(path.toString(), true))){
-       File file = new File(path.toString());
-       if(file.exists()){
-           objectMapper.writeValue(writertofile, result);
-         //writertofile.write(result);
-         //write(writertofile);
-       }else {
-         file.createNewFile();
-       }
 
+    //append to a existing file it should have second parameter as true in FileWriter.
+     try(BufferedWriter writertofile = Files.newBufferedWriter(path, StandardOpenOption.CREATE)){
+       write(writertofile);
      }catch (IOException e){
        e.printStackTrace();
      }

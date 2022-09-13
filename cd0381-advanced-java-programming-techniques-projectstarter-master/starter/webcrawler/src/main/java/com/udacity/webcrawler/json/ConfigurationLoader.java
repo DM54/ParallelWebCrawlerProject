@@ -33,22 +33,12 @@ public final class ConfigurationLoader {
    *
    * @return the loaded {@link CrawlerConfiguration}.
    */
-  public CrawlerConfiguration load() {
-      CrawlerConfiguration crawlerConfiguration = null;
-      JsonFactory factory = new JsonFactory();
-      factory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE,false);
-      ObjectMapper objectMapper = new ObjectMapper(factory);
-    try(BufferedReader reader = new BufferedReader(new FileReader(path.toString()))){
-        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
-        objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
-        crawlerConfiguration = objectMapper.readValue(reader, CrawlerConfiguration.class);
+  public CrawlerConfiguration load() throws IOException {
 
+    try(BufferedReader reader = new BufferedReader(new FileReader(path.toString()))){
+        return read(reader);
     }
-    catch(IOException e){
-      e.printStackTrace();
-    }
-    return crawlerConfiguration;
+
   }
 
   /**
@@ -59,25 +49,13 @@ public final class ConfigurationLoader {
    */
 
   public static CrawlerConfiguration read(Reader reader){
-    CrawlerConfiguration crawlerConfiguration = null;
-    JsonFactory factory = new JsonFactory();
-    factory.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE,false);
-    ObjectMapper objectMapper = new ObjectMapper(factory);
-    try(JsonParser parser = factory.createParser(reader)){
-
-        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
-       // objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
-        objectMapper.enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY);
-        crawlerConfiguration = objectMapper.readValue(parser, CrawlerConfiguration.class);
-
-
-
-    }catch (JsonMappingException e){
-      e.printStackTrace();
+      ObjectMapper objectMapper = new ObjectMapper();
+      objectMapper.disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
+    try{
+        return objectMapper.readValue(reader, CrawlerConfiguration.class);
     }catch (IOException e){
       e.printStackTrace();
+      return new CrawlerConfiguration.Builder().build();
     }
-    return  crawlerConfiguration;
   }
 }
