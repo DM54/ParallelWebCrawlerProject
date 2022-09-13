@@ -55,37 +55,10 @@ final class ParallelWebCrawler implements WebCrawler {
     Instant deadline = clock.instant().plus(timeout);
     Map<String, Integer> counts = new ConcurrentHashMap<>();
     Set<String> visitedUrls = Collections.synchronizedSet(new HashSet<>());
-      for (String url : startingUrls) {
-        CustomRecursiveAction recursiveAction = new CustomRecursiveAction(url,deadline,maxDepth,counts,visitedUrls);
-        if (maxDepth == 0 || clock.instant().isAfter(deadline)) {
-          //return;
-        }
 
-        for (Pattern pattern : ignoredUrls) {
-          if (pattern.matcher(url).matches()) {
-            //return;
-          }
-        }
-        if (visitedUrls.contains(url)) {
-          // return;
-        }
-        visitedUrls.add(url);
-
-        PageParser.Result result = parserFactory.get(url).parse();
-        for (Map.Entry<String, Integer> e : result.getWordCounts().entrySet()) {
-          if (counts.containsKey(e.getKey())) {
-            counts.put(e.getKey(), e.getValue() + counts.get(e.getKey()));
-          } else {
-            counts.put(e.getKey(), e.getValue());
-          }
-        }
-        for (String link : result.getLinks()) {
-
-          recursiveAction = new CustomRecursiveAction(link,deadline,maxDepth-1,counts,visitedUrls);
-        }
-        pool.invoke(recursiveAction);
-      }
-      pool.shutdown();
+    for (String url : startingUrls) {
+      pool.invoke(new CustomRecursiveAction(clock,timeout,url, deadline, maxDepth, counts, visitedUrls,parserFactory,ignoredUrls));
+    }
 
     if (counts.isEmpty()) {
       return new CrawlResult.Builder()
