@@ -19,15 +19,17 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
   private final Clock clock;
   private final ZonedDateTime startTime;
   private final ZonedDateTime endTime;
+  private final Object delegate;
 
   //private static Logger logger = LoggerFactory.getLogger(ProfilingMethodInterceptor.class);
 
   // TODO: You will need to add more instance fields and constructor arguments to this class.
 
-  ProfilingMethodInterceptor(Clock clock) {
+  ProfilingMethodInterceptor(Clock clock, Object delegate) {
     this.clock = Objects.requireNonNull(clock);
     this.startTime = ZonedDateTime.now(clock);
     this.endTime = ZonedDateTime.now(clock);
+    this.delegate = delegate;
   }
 /*public Profiler getProxy() {
   Profiler proxy = (Profiler) Proxy.newProxyInstance(
@@ -46,20 +48,22 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
     //       ProfilingState methods
       ProfilingState profilingState = new ProfilingState();
       Duration duration = Duration.between(startTime,endTime);
- try {
-     if(method.getAnnotation(Profiled.class)!=null){
-         method.invoke(clock,args);
-         profilingState.record(Profiled.class,method,duration);
+     Object res = null;
+     method = Profiled.class.getDeclaredMethod(method.getName());
 
-     }else {
-         throw new  IllegalArgumentException("The method is not profiled annotation");
+     try {
+         if(method.isAnnotationPresent(Profiled.class)){
+             if(method.getAnnotation(Profiled.class)!=null) {
+                 res = method.invoke(Profiled.class, args);
+                 profilingState.record(Profiled.class, method, duration);
+             }
+         }
+     }catch (InvocationTargetException e){
+         e.getCause();
+     }catch (IllegalAccessException e){
+         throw new RuntimeException(e);
      }
- }catch (InvocationTargetException e){
-      e.getCause();
- }catch ( IllegalAccessException e){
-    throw new RuntimeException(e);
- }
 
-   return method;
+   return res;
   }
 }
