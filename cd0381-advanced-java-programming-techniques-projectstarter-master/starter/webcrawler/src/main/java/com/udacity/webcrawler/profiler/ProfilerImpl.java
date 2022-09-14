@@ -31,14 +31,17 @@ final class ProfilerImpl implements Profiler {
   }
 
   @Override
-  public <T> T wrap(Class<T> klass, T delegate) {
-   // Objects.requireNonNull(klass);
+  public <T> T wrap(Class<T> klass, T delegate){
+    // Objects.requireNonNull(klass);
 
     // TODO: Use a dynamic proxy (java.lang.reflect.Proxy) to "wrap" the delegate in a
     //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
     //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
-    T wraps = (T) Proxy.newProxyInstance(ProfilerImpl.class.getClassLoader(), new Class[]{klass},  new ProfilingMethodInterceptor(delegate));
-    return wraps;
+    Object proxy = Proxy.newProxyInstance(
+            ProfilerImpl.class.getClassLoader(),
+            new Class[]{Profiler.class},
+            new ProfilingMethodInterceptor(clock));
+    return (T) proxy;
   }
 
   @Override

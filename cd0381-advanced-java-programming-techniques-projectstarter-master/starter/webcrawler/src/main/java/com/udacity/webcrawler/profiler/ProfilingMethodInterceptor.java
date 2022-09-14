@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.time.Clock;
 import java.util.Objects;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.InvocationTargetException;
@@ -17,6 +18,7 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
 
   private final Clock clock;
   private final ZonedDateTime startTime;
+  private final ZonedDateTime endTime;
 
   //private static Logger logger = LoggerFactory.getLogger(ProfilingMethodInterceptor.class);
 
@@ -25,31 +27,39 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
   ProfilingMethodInterceptor(Clock clock) {
     this.clock = Objects.requireNonNull(clock);
     this.startTime = ZonedDateTime.now(clock);
+    this.endTime = ZonedDateTime.now(clock);
   }
-Profiler getProxy() {
+/*public Profiler getProxy() {
   Profiler proxy = (Profiler) Proxy.newProxyInstance(
           ProfilingMethodInterceptor.class.getClassLoader(),
           new Class[]{Profiler.class},
           new ProfilingMethodInterceptor(clock));
   return proxy;
-}
-
+}*/
 
   @Override
-  public Object invoke(Object proxy, Method method, Object[] args) throws
-          InvocationTargetException, IllegalAccessException{
+  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     // TODO: This method interceptor should inspect the called method to see if it is a profiled
     //       method. For profiled methods, the interceptor should record the start time, then
     //       invoke the method using the object that is being profiled. Finally, for profiled
     //       methods, the interceptor should record how long the method call took, using the
     //       ProfilingState methods
-   if(method.getAnnotation(Profiled.class)!=null){
-     method.getName();
-   }
+      ProfilingState profilingState = new ProfilingState();
+      Duration duration = Duration.between(startTime,endTime);
+ try {
+     if(method.getAnnotation(Profiled.class)!=null){
+         method.invoke(clock,args);
+         profilingState.record(Profiled.class,method,duration);
 
-    Object results = method.invoke(clock,args);
-    //System.out.println(method.getName(), new ProfilingState.record());
+     }else {
+         throw new  IllegalArgumentException("The method is not profiled annotation");
+     }
+ }catch (InvocationTargetException e){
+      e.getCause();
+ }catch ( IllegalAccessException e){
+    throw new RuntimeException(e);
+ }
 
-   return results;
+   return method;
   }
 }
