@@ -38,23 +38,21 @@ final class ProfilerImpl implements Profiler {
     // TODO: Use a dynamic proxy (java.lang.reflect.Proxy) to "wrap" the delegate in a
     //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
     //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
-    ProfilingMethodInterceptor interceptor = new ProfilingMethodInterceptor(clock);
-    klass = delegate.getClass();
-    Method[] methods = klass.getMethods();
-    for (Method m: methods
+
+    for (Method m : klass.getDeclaredMethods()
          ) {
-      String name = m.getName();
-      Method method1 = klass.getMethod(name);
-      Profiled annotation = method1.getAnnotation(Profiled.class);
-      if (!annotation.equals(method1.isAnnotationPresent(Profiled.class))) {
+     // Profiled annotation = m.getAnnotation(Profiled.class);
+      if(!m.isAnnotationPresent(Profiled.class)){
         throw new IllegalArgumentException("This method doesn't contain Profiled Annotation");
       }
     }
-
-    return  (T) Proxy.newProxyInstance(
+    Object proxy = Proxy.newProxyInstance(
             klass.getClassLoader(),
             new Class[]{klass},
-            interceptor);
+            new ProfilingMethodInterceptor(clock));
+
+    return (T) proxy;
+
 
   }
 
@@ -62,7 +60,7 @@ final class ProfilerImpl implements Profiler {
   public void writeData(Path path) {
     // TODO: Write the ProfilingState data to the given file path. If a file already exists at that
     //       path, the new data should be appended to the existing file.
-    try(BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE)){
+    try(BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.APPEND)){
       writeData(writer);
     }catch (IOException e){
       e.printStackTrace();
