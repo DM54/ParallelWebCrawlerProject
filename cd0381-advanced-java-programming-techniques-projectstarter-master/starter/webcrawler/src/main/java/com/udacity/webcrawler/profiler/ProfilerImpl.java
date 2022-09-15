@@ -3,6 +3,7 @@ package com.udacity.webcrawler.profiler;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.io.IOException;
 import java.io.BufferedWriter;
@@ -37,14 +38,23 @@ final class ProfilerImpl implements Profiler {
     // TODO: Use a dynamic proxy (java.lang.reflect.Proxy) to "wrap" the delegate in a
     //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
     //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
+    ProfilingMethodInterceptor interceptor = new ProfilingMethodInterceptor(clock);
+    klass = delegate.getClass();
+    Method[] methods = klass.getMethods();
+    for (Method m: methods
+         ) {
+      String name = m.getName();
+      Method method1 = klass.getMethod(name);
+      Profiled annotation = method1.getAnnotation(Profiled.class);
+      if (!annotation.equals(method1.isAnnotationPresent(Profiled.class))) {
+        throw new IllegalArgumentException("This method doesn't contain Profiled Annotation");
+      }
+    }
 
-     if(!klass.isAnnotationPresent(Profiled.class)){
-      throw new IllegalArgumentException("This method doesn't contain Profiled Annotation");
-     }
     return  (T) Proxy.newProxyInstance(
             klass.getClassLoader(),
             new Class[]{klass},
-            new ProfilingMethodInterceptor(clock,delegate));
+            interceptor);
 
   }
 
