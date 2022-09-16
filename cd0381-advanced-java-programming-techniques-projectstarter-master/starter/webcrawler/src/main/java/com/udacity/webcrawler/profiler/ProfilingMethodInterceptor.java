@@ -19,28 +19,20 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
   private final Clock clock;
   private final ZonedDateTime startTime;
   private final ZonedDateTime endTime;
-//  private final Object delegate;
+  private final Object delegate;
 
-  //private static Logger logger = LoggerFactory.getLogger(ProfilingMethodInterceptor.class);
 
   // TODO: You will need to add more instance fields and constructor arguments to this class.
 
-  ProfilingMethodInterceptor(Clock clock) {
+  ProfilingMethodInterceptor(Object delegate, Clock clock) {
     this.clock = Objects.requireNonNull(clock);
     this.startTime = ZonedDateTime.now(clock);
     this.endTime = ZonedDateTime.now(clock);
-    //this.delegate = delegate;
+    this.delegate = delegate;
   }
-/*public Profiler getProxy() {
-  Profiler proxy = (Profiler) Proxy.newProxyInstance(
-          ProfilingMethodInterceptor.class.getClassLoader(),
-          new Class[]{Profiler.class},
-          new ProfilingMethodInterceptor(clock));
-  return proxy;
-}*/
 
   @Override
-  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable{
+  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable, IllegalArgumentException{
     // TODO: This method interceptor should inspect the called method to see if it is a profiled
     //       method. For profiled methods, the interceptor should record the start time, then
     //       invoke the method using the object that is being profiled. Finally, for profiled
@@ -51,22 +43,32 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
       Object res =null;
     // method = Profiled.class.getDeclaredMethod(method.getName());
          try {
-             ProfilingMethodInterceptor interceptor = new ProfilingMethodInterceptor(clock);
-             Class c = interceptor.getClass();
-             Method method1 = c.getMethod(method.getName());
-             Profiled annotation = method1.getAnnotation(Profiled.class);
-             if (annotation.equals(method1.isAnnotationPresent(Profiled.class))) {
-                 res = method.invoke(profiler, args);
+            // ProfilingMethodInterceptor interceptor = new ProfilingMethodInterceptor(clock, delegate);
+            // Class c = interceptor.getClass();
+             //Method method1 = c.getMethod(method.getName());
+             //Profiled annotation = method1.getAnnotation(Profiled.class);
+            // if (method.isAnnotationPresent(Profiled.class)) {
                  Duration duration = Duration.between(startTime, endTime);
-                 profilingState.record(ProfilerImpl.class, method, duration);
-             } else {
-                 throw new IllegalArgumentException("This method doesn't contain Profiled Annotation");
-             }
+                 String name = method.getName();
+                 if(name.contains("toString")){
+                     profilingState.record(ProfilingMethodInterceptor.class,method,duration);
+                 }else{
+                     profilingState.record(ProfilingMethodInterceptor.class,method,duration);
+                 }
+                 res = method.invoke(delegate, args);
+                 profilingState.record(ProfilingMethodInterceptor.class, method, duration);
+
+             //}
+               if(!method.isAnnotationPresent(Profiled.class)){
+
+               }
          }catch (InvocationTargetException e) {
         throw e.getTargetException();
         }catch (IllegalAccessException e) {
             throw new RuntimeException(e);
-        }
+        }catch (IllegalArgumentException e){
+             throw new IllegalArgumentException("This is not an annotation", e);
+         }
 
 
       return res;

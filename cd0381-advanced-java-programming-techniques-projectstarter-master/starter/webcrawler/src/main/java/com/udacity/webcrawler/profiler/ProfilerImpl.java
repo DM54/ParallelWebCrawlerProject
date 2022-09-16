@@ -31,7 +31,7 @@ final class ProfilerImpl implements Profiler {
     this.startTime = ZonedDateTime.now(clock);
   }
 
-  @Override
+  @Override @SuppressWarnings("unchecked")
   public <T> T wrap(Class<T> klass, T delegate){
     // Objects.requireNonNull(klass);
 
@@ -39,20 +39,17 @@ final class ProfilerImpl implements Profiler {
     //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
     //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
 
-    for (Method m : klass.getDeclaredMethods()
+   /* for (Method m : klass.getDeclaredMethods()
          ) {
      // Profiled annotation = m.getAnnotation(Profiled.class);
       if(!m.isAnnotationPresent(Profiled.class)){
         throw new IllegalArgumentException("This method doesn't contain Profiled Annotation");
       }
-    }
-    Object proxy = Proxy.newProxyInstance(
-            klass.getClassLoader(),
-            new Class[]{klass},
-            new ProfilingMethodInterceptor(clock));
-
-    return (T) proxy;
-
+    }*/
+    return (T) Proxy.newProxyInstance(
+            klass.getClassLoader(),// classloader for whichever interface we want.
+            new Class[]{klass}, // all the interfaces
+            new ProfilingMethodInterceptor(delegate, clock)); //the handler
 
   }
 
