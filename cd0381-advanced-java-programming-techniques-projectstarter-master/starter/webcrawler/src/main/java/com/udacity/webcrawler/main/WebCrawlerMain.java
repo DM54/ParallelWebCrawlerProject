@@ -40,7 +40,7 @@ public final class WebCrawlerMain {
 
     CrawlResult result = crawler.crawl(config.getStartPages());
     CrawlResultWriter resultWriter = new CrawlResultWriter(result);
-
+    // TODO: Write the crawl results to a JSON file (or System.out if the file name is empty)
     Path path = Paths.get(config.getResultPath());
     File file = new File(path.toString());
     if(file.exists()){
@@ -52,8 +52,19 @@ public final class WebCrawlerMain {
         e.printStackTrace();
       }
     }
-    // TODO: Write the crawl results to a JSON file (or System.out if the file name is empty)
+
     // TODO: Write the profile data to a text file (or System.out if the file name is empty)
+    Path path1 = Paths.get(config.getProfileOutputPath());
+    File file1 = new File(path1.toString());
+    if(file1.exists()){
+      resultWriter.write(path1);
+    }else{
+      try(Writer outputStream1 = new BufferedWriter(new OutputStreamWriter(System.out))){
+        resultWriter.write(outputStream1);
+      }catch (IOException e){
+        e.printStackTrace();
+      }
+    }
   }
 
   public static void main(String[] args) throws Exception {
