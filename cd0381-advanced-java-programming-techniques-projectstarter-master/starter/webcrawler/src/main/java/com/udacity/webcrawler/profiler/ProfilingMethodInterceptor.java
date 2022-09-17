@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.time.Clock;
 import java.util.Objects;
 import java.time.Duration;
+import java.lang.annotation.Annotation;
 import java.time.ZonedDateTime;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.InvocationTargetException;
@@ -17,22 +18,22 @@ import java.util.logging.Logger;
 final class ProfilingMethodInterceptor implements InvocationHandler {
 
     private final Clock clock;
-    private final ZonedDateTime startTime;
-    private final ZonedDateTime endTime;
+    //private final ZonedDateTime startTime;
+    //private final ZonedDateTime endTime;
     private final Object delegate;
 
 
     // TODO: You will need to add more instance fields and constructor arguments to this class.
 
-    ProfilingMethodInterceptor(Object delegate, Clock clock, ZonedDateTime startTime) {
+    ProfilingMethodInterceptor(Object delegate, Clock clock) {
         this.clock = Objects.requireNonNull(clock);
-        this.startTime = ZonedDateTime.now(clock);
-        this.endTime = ZonedDateTime.now(clock);
+       // this.startTime = ZonedDateTime.now(clock);
+       // this.endTime = ZonedDateTime.now(clock);
         this.delegate = delegate;
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable{
         // TODO: This method interceptor should inspect the called method to see if it is a profiled
         //       method. For profiled methods, the interceptor should record the start time, then
         //       invoke the method using the object that is being profiled. Finally, for profiled
@@ -41,20 +42,30 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
         ProfilingState profilingState = new ProfilingState();
         Profiler profiler = new ProfilerImpl(clock);
         Object res = null;
-        Duration duration = Duration.between(startTime, endTime);
-        // method = Profiled.class.getDeclaredMethod(method.getName());
+        long starttime = System.currentTimeMillis();
+       try {
 
-         if (method.isAnnotationPresent(Profiled.class)) {
-        String name = method.getName();
-                /* if(name.contains("toString")){
-                     profilingState.record(ProfilingMethodInterceptor.class,method,duration);
-                 }else{
-                     profilingState.record(ProfilingMethodInterceptor.class,method,duration);
-                 }*/ // return method.invoke(delegate, args);
-        profilingState.record(ProfilingMethodInterceptor.class, method, duration);
-        }
+           for (Method m : delegate.getClass().getDeclaredMethods()
+           ) {
+               Annotation annotations = m.getAnnotation(Profiled.class);
+               Profiled profiled = (Profiled) annotations;
+               if (profiled != null) {
+                   try {
+                       res = method.invoke(delegate, args);
+                   } catch (IllegalArgumentException e) {
+                       System.out.println(e.getCause());
+                   }
+               }
+           }
+       } finally {
+          // if (method.isAnnotationPresent(Profiled.class)) {
+               res = method.invoke(delegate, args);
+               long endtime = System.currentTimeMillis();
+               Duration duration = Duration.ofMillis(endtime - starttime);
 
-        return method.invoke(delegate, args);
-
+               profilingState.record(Profiler.class, method, duration);
+           //}
+       }
+        return res;
     }
 }

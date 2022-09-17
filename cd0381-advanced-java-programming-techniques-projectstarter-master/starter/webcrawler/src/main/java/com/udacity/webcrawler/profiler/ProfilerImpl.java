@@ -10,6 +10,7 @@ import java.io.BufferedWriter;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.lang.annotation.Annotation;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.lang.reflect.Proxy;
@@ -40,19 +41,16 @@ final class ProfilerImpl implements Profiler {
     //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
     //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
 
+  Object proxy = null;
 
-      if (klass.isAnnotation()) {
-          for (Method m : klass.getMethods()
-          ) {
-              if (!m.isAnnotationPresent(Profiled.class)) {
-                  throw new IllegalArgumentException("This method doesn't contain Profiled Annotation");
-              }
-          }
-      }
-      return (T) Proxy.newProxyInstance(
-              klass.getClassLoader(),// classloader for whichever interface we want.
-              new Class[]{klass}, // all the interfaces
-              new ProfilingMethodInterceptor(delegate, clock, startTime)); //the handler
+
+                 proxy = Proxy.newProxyInstance(
+                         klass.getClassLoader(),// classloader for whichever interface we want.
+                         new Class[]{klass}, // all the interfaces
+                         new ProfilingMethodInterceptor(delegate, clock)); //the handler
+
+
+      return  (T) proxy;
  }
 
   @Override
