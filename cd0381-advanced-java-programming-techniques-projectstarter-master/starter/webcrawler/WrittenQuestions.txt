@@ -10,6 +10,9 @@ Q1. Run the web crawler using the configurations located at src/main/config/writ
     the ParallelWebCrawler.
 
     Why did the parser take more time when run with ParallelWebCrawler?
+    
+    The parser took more time when running with ParallelWebCrawler is because each custom tasks will download and process Urls in a 
+    separate threads. In a parallel program it will have mulitple threads accessing data structures at the same time.
 
 
 Q2. Your manager ran your crawler on her old personal computer, using the configurations from Q1, and she notices that
@@ -17,6 +20,12 @@ Q2. Your manager ran your crawler on her old personal computer, using the config
 
     (a) Suggest one reason why the sequential web crawler was able to read more web pages than the parallel crawler.
         (Hint: Try setting "parallelism" to 1 in the JSON configs to simulate your manager's computer.)
+        
+        When my manager run the crawler on her old computer, it used the desired parallelism (the number of CPU cores) available for the
+        web crawler. So, the crawler might've used the default number of CPU cores in the system. If parallelism is set to 1, it will run using 
+        the legacy Sequential crawler instead of Parallel crawler. Unless I used the getImplementationOverride() and explictly wrote which web 
+        crawler implementation to use. 
+        
 
     (b) Suggest one scenario in which the parallel web crawler will almost certainly perform better than the sequential
         crawler. Why will it perform better?
