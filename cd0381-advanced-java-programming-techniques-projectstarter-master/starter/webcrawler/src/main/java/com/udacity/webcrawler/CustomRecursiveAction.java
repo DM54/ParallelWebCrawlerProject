@@ -47,24 +47,16 @@ final class CustomRecursiveAction extends RecursiveAction {
 
         List<CustomRecursiveAction> subtasks = new ArrayList<>();
         ReentrantLock lock = new ReentrantLock();
-        try {
-            lock.lock();
+
             if (maxDepth == 0 || clock.instant().isAfter(deadline)) {
                 return;
             }
-        }finally {
-            lock.unlock();
-        }
-        try {
-            lock.lock();
+
             for (Pattern pattern : ignoredUrls) {
                 if (pattern.matcher(url).matches()) {
                     return;
                 }
             }
-        }finally {
-            lock.unlock();
-        }
 
         try {
             lock.lock();
@@ -76,8 +68,7 @@ final class CustomRecursiveAction extends RecursiveAction {
             lock.unlock();
         }
         PageParser.Result result = parserFactory.get(url).parse();
-        try {
-            lock.lock();
+
             for (Map.Entry<String, Integer> e : result.getWordCounts().entrySet()) {
                 if (counts.containsKey(e.getKey())) {
                     counts.put(e.getKey(), e.getValue() + counts.get(e.getKey()));
@@ -85,9 +76,7 @@ final class CustomRecursiveAction extends RecursiveAction {
                     counts.put(e.getKey(), e.getValue());
                 }
             }
-        }finally {
-            lock.unlock();
-        }
+
             for (String link : result.getLinks()) {
 
                 CustomRecursiveAction recursiveAction = new CustomRecursiveAction(clock, timeout, link, deadline, maxDepth - 1, counts
