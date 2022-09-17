@@ -10,6 +10,9 @@ Q1. Run the web crawler using the configurations located at src/main/config/writ
     the ParallelWebCrawler.
 
     Why did the parser take more time when run with ParallelWebCrawler?
+    
+    The parser took more time when running with ParallelWebCrawler is because each custom tasks will download and process Urls in a 
+    separate threads. In a parallel program it will have mulitple threads accessing data structures at the same time.
 
 
 Q2. Your manager ran your crawler on her old personal computer, using the configurations from Q1, and she notices that
@@ -17,20 +20,44 @@ Q2. Your manager ran your crawler on her old personal computer, using the config
 
     (a) Suggest one reason why the sequential web crawler was able to read more web pages than the parallel crawler.
         (Hint: Try setting "parallelism" to 1 in the JSON configs to simulate your manager's computer.)
+        
+        When my manager run the crawler on her old computer, it used the desired parallelism (the number of CPU cores) available for the
+        web crawler. So, the crawler might've used the default number of CPU cores in the system. If parallelism is set to 1, it will run using 
+        the legacy Sequential crawler instead of Parallel crawler. Unless I used the getImplementationOverride() and explictly wrote which web 
+        crawler implementation to use. 
+        
 
     (b) Suggest one scenario in which the parallel web crawler will almost certainly perform better than the sequential
         crawler. Why will it perform better?
+        
+        One scenario in which the parallel web crawler will almost perform better than the sequential crawler is when we want to avoid repeated downloads from 
+        the same page or get more work done. Parallelism and concurrency allows programs to get more work done in the same amount of time and 
+        divides a problem into smaller subproblems and solves each subproblems in parallel. 
+        With ForkJoinPool work that was submitted usually do so by subclass either RecusriveTask or RecursiveAction. 
+        These subclasses can submit more work to the thread pool. 
 
 
 Q3. Analyze your method profiler through the lens of Aspect Oriented Programming, by answering the following questions:
 
     (a) What cross-cutting concern is being addressed by the com.udacity.webcrawler.profiler.Profiler class?
-
+        The performance and how long the method calls takes is a cross-cutting concern in the Profiler class.
     (b) What are the join points of the Profiler in the web crawler program?
-
+      The join points are code execution location where advice can potentially be applied. 
+      For example the methods in the Profiler class are the advice. 
 
 Q4. Identify three (3) different design patterns used in this project, and explain which interfaces, classes, and/or
     libraries use or implement those design patterns.
 
     For each pattern, name one thing about the pattern that you LIKED, and one thing you DISLIKED. If you did not like
     anything, you can name two things you disliked.
+    
+    (1) Builder Design Pattern -> CrawlerConfiguration, CrawlResult, PageParser
+    The builder pattern is organize and it is easy to understand what it does or it purpose. 
+    It helps to create different type of objects by combining them to the builder class.  
+    The disadvantage of the builder pattern is that it needs to copy the fields when setting the fields of the 
+    original class.
+    (2) Dynamic Proxy -> ProfilingMethodInterceptor, ProfilerImpl 
+    It is cool to able to call methods at once at runtime, but it can be hard to understand what it does.
+    (3) Dependency Injection -> ProfilerImpl, PageParserFactoryImpl
+     what I like about dependency injection, the DI framework creates the objects for you and then can inject those objects into the class.
+     Also, what I don't like about, is that it might take much more work to configure annotations and harder to understand or debug. 
