@@ -40,32 +40,29 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
         //       methods, the interceptor should record how long the method call took, using the
         //       ProfilingState methods
         ProfilingState profilingState = new ProfilingState();
-        Profiler profiler = new ProfilerImpl(clock);
+        //ProfilerImpl profiler1 = new ProfilerImpl(clock);
         Object res = null;
         long starttime = System.currentTimeMillis();
-       try {
 
-           for (Method m : delegate.getClass().getDeclaredMethods()
-           ) {
-               Annotation annotations = m.getAnnotation(Profiled.class);
-               Profiled profiled = (Profiled) annotations;
-               if (profiled != null) {
-                   try {
-                       res = method.invoke(delegate, args);
-                   } catch (IllegalArgumentException e) {
-                       System.out.println(e.getCause());
-                   }
-               }
-           }
-       } finally {
-          // if (method.isAnnotationPresent(Profiled.class)) {
-               res = method.invoke(delegate, args);
-               long endtime = System.currentTimeMillis();
-               Duration duration = Duration.ofMillis(endtime - starttime);
+       Class<?> classess = method.getClass();
+       Class<?>[] inter = classess.getInterfaces();
+        for (Class<?> c: inter
+             ) {
+            for (Method m: c.getMethods()
+                 ) {
+                if(m.isAnnotationPresent(Profiled.class)){
 
-               profilingState.record(Profiler.class, method, duration);
-           //}
-       }
-        return res;
+                    method.invoke(delegate, args);
+                    long endtime = System.currentTimeMillis();
+                    Duration duration = Duration.ofMillis(endtime - starttime);
+                    profilingState.record(ProfilingMethodInterceptor.class, method, duration);
+
+                }else {
+                    throw new IllegalArgumentException("no");
+                }
+            }
+        }
+
+        return method.invoke(delegate,args);
     }
 }

@@ -14,8 +14,8 @@ import java.lang.annotation.Annotation;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.lang.reflect.Proxy;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.UndeclaredThrowableException;
+import java.util.*;
+import java.util.Map.Entry;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
 /**
@@ -26,6 +26,7 @@ final class ProfilerImpl implements Profiler {
   private final Clock clock;
   private final ProfilingState state = new ProfilingState();
   private final ZonedDateTime startTime;
+
 
   @Inject
   ProfilerImpl(Clock clock) {
@@ -42,13 +43,10 @@ final class ProfilerImpl implements Profiler {
     //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
 
   Object proxy = null;
-
-
-                 proxy = Proxy.newProxyInstance(
-                         klass.getClassLoader(),// classloader for whichever interface we want.
-                         new Class[]{klass}, // all the interfaces
-                         new ProfilingMethodInterceptor(delegate, clock)); //the handler
-
+              proxy = Proxy.newProxyInstance(
+                      klass.getClassLoader(),// classloader for whichever interface we want.
+                      new Class[]{klass}, // all the interfaces
+                      new ProfilingMethodInterceptor(delegate, clock)); //the handler
 
       return  (T) proxy;
  }
