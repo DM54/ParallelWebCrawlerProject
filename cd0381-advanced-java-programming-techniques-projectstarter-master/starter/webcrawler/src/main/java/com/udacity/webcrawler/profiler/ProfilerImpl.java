@@ -15,7 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.Map.Entry;
+import java.nio.charset.StandardCharsets;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
 /**
@@ -35,30 +35,39 @@ final class ProfilerImpl implements Profiler {
   }
 
   @Override @SuppressWarnings("unchecked")
-  public <T> T wrap(Class<T> klass, T delegate){
-    // Objects.requireNonNull(klass);
+  public <T> T wrap(Class<T> klass, T delegate) {
+      // Objects.requireNonNull(klass);
 
-    // TODO: Use a dynamic proxy (java.lang.reflect.Proxy) to "wrap" the delegate in a
-    //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
-    //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
+      // TODO: Use a dynamic proxy (java.lang.reflect.Proxy) to "wrap" the delegate in a
+      //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
+      //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
+      Object proxy = null;
 
-  Object proxy = null;
-              proxy = Proxy.newProxyInstance(
-                      klass.getClassLoader(),// classloader for whichever interface we want.
-                      new Class[]{klass}, // all the interfaces
-                      new ProfilingMethodInterceptor(delegate, clock)); //the handler
+   //try {
+       return (T) Proxy.newProxyInstance(
+               klass.getClassLoader(),// classloader for whichever interface we want.
+               new Class[]{klass}, // all the interfaces
+               new ProfilingMethodInterceptor(delegate, clock)); //the handler
 
-      return  (T) proxy;
+
+   /* }finally {
+       if(klass.isInterface()) {
+           if (!klass.isAnnotation()) {
+               //throw new IllegalArgumentException();
+           }
+       }*/
+   //}
+
  }
 
   @Override
   public void writeData(Path path) {
     // TODO: Write the ProfilingState data to the given file path. If a file already exists at that
     //       path, the new data should be appended to the existing file.
-    try(BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE, StandardOpenOption.APPEND)){
+    try(BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)){
       writeData(writer);
     }catch (IOException e){
-      e.printStackTrace();
+       e.getCause();
     }
   }
 
