@@ -27,7 +27,6 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
 
 
     // TODO: You will need to add more instance fields and constructor arguments to this class.
-    Map<String, Method> methodMap = new HashMap<>();
 
     ProfilingMethodInterceptor(Object delegate, Clock clock) {
         this.clock = Objects.requireNonNull(clock);
@@ -38,7 +37,7 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable, InvocationTargetException, IllegalAccessException,
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable,
             NoSuchMethodException {
         // TODO: This method interceptor should inspect the called method to see if it is a profiled
         //       method. For profiled methods, the interceptor should record the start time, then
@@ -48,25 +47,43 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
         ProfilingState profilingState = new ProfilingState();
         ProfilerImpl profiler1 = new ProfilerImpl(clock);
         Object res = null;
-        // Instant starttime = clock.instant();
-        //Instant endtime = clock.instant();
-       if(delegate instanceof Proxy){
-           //this is a proxy
-           InvocationHandler handler = Proxy.getInvocationHandler(delegate);
+        ZonedDateTime start = null;
+        Method m = delegate.getClass().getMethod(method.getName(), method.getParameterTypes());
 
-           if (delegate.getClass().getMethod(method.getName()).getAnnotation(Profiled.class) != null) {
-               ZonedDateTime start = ZonedDateTime.now(clock);
-               res = handler.invoke(delegate,method,args);
-               Duration duration = Duration.between(start, ZonedDateTime.now(clock));
-               profilingState.record(delegate.getClass(), method, duration);
-           }
-           return res;
+        Class declaringclass = method.getDeclaringClass();
 
-       }
-       //this is not a proxy
-        return method.invoke(delegate, args);
+        if(declaringclass==Object.class){
+            if(method.getName().equals("equals") && args.length>0 && args[0] instanceof Proxy){
+               if(Proxy.getInvocationHandler(proxy) instanceof ProfilingMethodInterceptor){
+                   args[0] = ((ProfilingMethodInterceptor) Proxy.getInvocationHandler(proxy)).delegate;
+               }
+            } else if (method.getName().equals("hashCode")) {
+                return new Integer(System.identityHashCode(delegate));
+            } else if (method.getName().equals("toString")) {
+                return delegate.getClass().getName() + '@' + Integer.toHexString(delegate.hashCode());
+            }
+        }
 
-     //  return null;
+      try {
+          if(m.getAnnotation(Profiled.class)!=null) {
+              start = ZonedDateTime.now(clock);
+              res = method.invoke(delegate, args);
+              Duration duration = Duration.between(start,ZonedDateTime.now(clock));
+              profilingState.record(delegate.getClass(), method, duration);
+          } else {
+             res = method.invoke(delegate, args);
+          }
+      }catch (InvocationTargetException e) {
+        throw e.getTargetException();
+    } catch (Exception e) {
+        throw new RuntimeException(e.getMessage());
+    }finally {
+          start = ZonedDateTime.now(clock);
+          res = method.invoke(delegate, args);
+          Duration duration = Duration.between(start,ZonedDateTime.now(clock));
+          profilingState.record(delegate.getClass(), method, duration);
+      }
+      return res;
 
     }
 }

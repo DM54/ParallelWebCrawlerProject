@@ -35,39 +35,41 @@ final class ProfilerImpl implements Profiler {
   }
 
   @Override @SuppressWarnings("unchecked")
-  public <T> T wrap(Class<T> klass, T delegate) {
+  public <T> T wrap(Class<T> klass, T delegate){
       // Objects.requireNonNull(klass);
 
       // TODO: Use a dynamic proxy (java.lang.reflect.Proxy) to "wrap" the delegate in a
       //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
       //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
       Object proxy = null;
-
-   //try {
-       return (T) Proxy.newProxyInstance(
-               klass.getClassLoader(),// classloader for whichever interface we want.
-               new Class[]{klass}, // all the interfaces
-               new ProfilingMethodInterceptor(delegate, clock)); //the handler
-
-
-   /* }finally {
-       if(klass.isInterface()) {
-           if (!klass.isAnnotation()) {
-               //throw new IllegalArgumentException();
-           }
-       }*/
-   //}
-
+      /*try{
+          for (Method met: delegate.getClass().getMethods()
+               ) {
+              Method m = delegate.getClass().getMethod(met.getName(), met.getParameterTypes());
+              if(!m.isAnnotationPresent(Profiled.class)){
+                  throw new IllegalArgumentException();
+              }
+          }
+      }catch (NoSuchMethodException e){
+          e.printStackTrace();
+      }
+      finally {*/
+          return (T) Proxy.newProxyInstance(
+                  delegate.getClass().getClassLoader(),// classloader for whichever interface we want.
+                  new Class[]{klass}, // all the interfaces
+                  new ProfilingMethodInterceptor(delegate, clock)); //the handler
+     // }
  }
 
   @Override
   public void writeData(Path path) {
     // TODO: Write the ProfilingState data to the given file path. If a file already exists at that
     //       path, the new data should be appended to the existing file.
-    try(BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)){
+    try(BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8,
+            StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)){
       writeData(writer);
     }catch (IOException e){
-       e.getCause();
+       e.printStackTrace();
     }
   }
 
