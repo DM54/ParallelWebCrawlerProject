@@ -1,5 +1,4 @@
 package com.udacity.webcrawler.profiler;
-
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.Writer;
@@ -42,23 +41,23 @@ final class ProfilerImpl implements Profiler {
       //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
       //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
       Object proxy = null;
-      /*try{
-          for (Method met: delegate.getClass().getMethods()
-               ) {
-              Method m = delegate.getClass().getMethod(met.getName(), met.getParameterTypes());
-              if(!m.isAnnotationPresent(Profiled.class)){
-                  throw new IllegalArgumentException();
-              }
-          }
-      }catch (NoSuchMethodException e){
-          e.printStackTrace();
-      }
-      finally {*/
-          return (T) Proxy.newProxyInstance(
-                  delegate.getClass().getClassLoader(),// classloader for whichever interface we want.
-                  new Class[]{klass}, // all the interfaces
-                  new ProfilingMethodInterceptor(delegate, clock)); //the handler
-     // }
+      // try {
+          // for (Method met : klass.getMethods()
+         //  ) {
+               if (delegate.getClass().isAssignableFrom(klass)) {
+                   if (!delegate.getClass().isAnnotationPresent(Profiled.class)) {
+                       throw new IllegalArgumentException("if the wrapped interface does not contain a @Profiled method.");
+                   }
+               }
+             else {
+                   proxy = Proxy.newProxyInstance(
+                           delegate.getClass().getClassLoader(),// classloader for whichever interface we want.
+                           new Class<?>[]{klass}, // all the interfaces
+                           new ProfilingMethodInterceptor(delegate, clock, startTime)); //the handler
+               }
+           return (T) proxy;
+      // }
+
  }
 
   @Override

@@ -35,7 +35,6 @@ public final class CrawlResultWriter {
    */
   public void write(Path path) {
 
-    //append to a existing file it should have second parameter as true in FileWriter.
      try(BufferedWriter writertofile = Files.newBufferedWriter(path, StandardOpenOption.CREATE)){
        write(writertofile);
      }catch (IOException e){
