@@ -44,18 +44,19 @@ final class ProfilerImpl implements Profiler {
       // try {
           // for (Method met : klass.getMethods()
          //  ) {
-               if (delegate.getClass().isAssignableFrom(klass)) {
+            /*   if (delegate.getClass().isAssignableFrom(klass)) {
                    if (!delegate.getClass().isAnnotationPresent(Profiled.class)) {
                        throw new IllegalArgumentException("if the wrapped interface does not contain a @Profiled method.");
                    }
                }
-             else {
-                   proxy = Proxy.newProxyInstance(
+             else {*/
+                   return (T) Proxy.newProxyInstance(
                            delegate.getClass().getClassLoader(),// classloader for whichever interface we want.
                            new Class<?>[]{klass}, // all the interfaces
-                           new ProfilingMethodInterceptor(delegate, clock, startTime)); //the handler
-               }
-           return (T) proxy;
+                           new ProfilingMethodInterceptor(delegate, clock)); //the handler
+               //}
+
+
       // }
 
  }
@@ -64,8 +65,7 @@ final class ProfilerImpl implements Profiler {
   public void writeData(Path path) {
     // TODO: Write the ProfilingState data to the given file path. If a file already exists at that
     //       path, the new data should be appended to the existing file.
-    try(BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8,
-            StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND)){
+      try(BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE)){
       writeData(writer);
     }catch (IOException e){
        e.printStackTrace();
