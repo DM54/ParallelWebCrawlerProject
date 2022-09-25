@@ -24,15 +24,17 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
     private final ZonedDateTime startTime;
     // private final ZonedDateTime endTime;
     private final Object delegate;
+    private final Class<?> klass;
 
 
     // TODO: You will need to add more instance fields and constructor arguments to this class.
 
-    ProfilingMethodInterceptor(Object delegate, Clock clock) {
+    ProfilingMethodInterceptor(Object delegate, Clock clock, Class<?> klass) {
         this.clock = Objects.requireNonNull(clock);
         this.startTime = ZonedDateTime.now(clock);
         //this.endTime = ZonedDateTime.now(clock);
         this.delegate = Objects.requireNonNull(delegate);
+        this.klass = Objects.requireNonNull(klass);
 
     }
 
@@ -48,7 +50,7 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
         ProfilerImpl profiler1 = new ProfilerImpl(clock);
         Object res = null;
         ZonedDateTime start = null;
-        Method m = delegate.getClass().getMethod(method.getName(), method.getParameterTypes());
+       // Method m = delegate.getClass().getMethod(method.getName(), method.getParameterTypes());
 
         Class declaringclass = method.getDeclaringClass();
 
@@ -65,34 +67,37 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
                 return delegate.getClass().getName() + '@' + Integer.toHexString(delegate.hashCode());
             }
         }
-
-
            try {
-              // InvocationHandler handler = new ProfilingMethodInterceptor(delegate, clock);
-              res= method.invoke(delegate,args);
+               if (method.isAnnotationPresent(Profiled.class)) {
+                   //start = startTime;
+                   res= method.invoke(delegate, args);
+                   //Thread.sleep(1000);
+                    ZonedDateTime end = ZonedDateTime.now(clock);
+                    Duration duration = Duration.between(startTime, end);
+                    profilingState.record(klass, method, duration);
+               }
+
            }catch (InvocationTargetException |
                    IllegalAccessException exception) {
                // Find underlying causal Exception.
                if (exception.getCause() != null) {
-                  throw  exception.getCause();
+                 throw  exception.getCause();
                }else {
                    // Catch expected Exceptions.
                    throw exception;
                }
            } catch (Exception exception) {
                // Catch unexpected Exceptions.
-               throw exception;
+              throw exception;
            }finally {
-                   if (m.getAnnotation(Profiled.class) != null) {
-                       //start = startTime;
-                       res = method.invoke(delegate, args);
-                       //Thread.sleep(1000);
-                       ZonedDateTime end = ZonedDateTime.now(clock);
-                       Duration duration = Duration.between(startTime, end);
-                       profilingState.record(delegate.getClass(), method, duration);
-                   }
+               if (method.isAnnotationPresent(Profiled.class)) {
+                   res= method.invoke(delegate, args);
+                   ZonedDateTime end = ZonedDateTime.now(clock);
+                   Duration duration = Duration.between(startTime, end);
+                   profilingState.record(klass, method, duration);
+               }
            }
-   return res;
+    return res;
 
     }
 }

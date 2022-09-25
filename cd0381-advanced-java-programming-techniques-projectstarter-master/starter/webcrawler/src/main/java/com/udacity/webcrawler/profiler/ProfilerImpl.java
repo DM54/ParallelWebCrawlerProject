@@ -16,6 +16,7 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.nio.charset.StandardCharsets;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+import java.util.HashMap;
 
 /**
  * Concrete implementation of the {@link Profiler}.
@@ -34,30 +35,45 @@ final class ProfilerImpl implements Profiler {
   }
 
   @Override @SuppressWarnings("unchecked")
-  public <T> T wrap(Class<T> klass, T delegate){
+  public <T> T wrap(Class<T> klass, T delegate) {
       // Objects.requireNonNull(klass);
 
       // TODO: Use a dynamic proxy (java.lang.reflect.Proxy) to "wrap" the delegate in a
       //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
       //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
       Object proxy = null;
-      // try {
-          // for (Method met : klass.getMethods()
-         //  ) {
-            /*   if (delegate.getClass().isAssignableFrom(klass)) {
-                   if (!delegate.getClass().isAnnotationPresent(Profiled.class)) {
-                       throw new IllegalArgumentException("if the wrapped interface does not contain a @Profiled method.");
-                   }
-               }
-             else {*/
-                   return (T) Proxy.newProxyInstance(
-                           delegate.getClass().getClassLoader(),// classloader for whichever interface we want.
-                           new Class<?>[]{klass}, // all the interfaces
-                           new ProfilingMethodInterceptor(delegate, clock)); //the handler
-               //}
+      Map<String,Class<?>> kmap = new HashMap<>();
+      Class<?>[] k = klass.getInterfaces();
+      for (Class<?> in:k
+           ) {
+          kmap.put(in.getName(),in);
+      }
+
+      for (Class<?> kk: kmap.values()
+           ) {
+          Method[] methods = kk.getMethods();
+          for (Method method: methods
+          ) {
+              if(!method.isAnnotationPresent(Profiled.class)){
+                  throw new IllegalArgumentException();
+              }
+          }
+
+      }
 
 
-      // }
+              proxy= Proxy.newProxyInstance(
+                      klass.getClassLoader(),// classloader for whichever interface we want.
+                      new Class<?>[]{klass}, // all the interfaces
+                      new ProfilingMethodInterceptor(delegate, clock, klass)); //the handler
+              return (T) proxy;
+         // }else {
+           //   throw new IllegalArgumentException();
+          //}
+      //} finally {
+        //  if(klass.isAnnotationPresent(Profiled.class)) {
+          //    return (T) proxy;
+
 
  }
 
