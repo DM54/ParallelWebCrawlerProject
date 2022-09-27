@@ -42,38 +42,18 @@ final class ProfilerImpl implements Profiler {
       //       ProfilingMethodInterceptor and return a dynamic proxy from this method.
       //       See https://docs.oracle.com/javase/10/docs/api/java/lang/reflect/Proxy.html.
       Object proxy = null;
-      Map<String,Class<?>> kmap = new HashMap<>();
-      Class<?>[] k = klass.getInterfaces();
-      for (Class<?> in:k
-           ) {
-          kmap.put(in.getName(),in);
+
+      Method[] methods = klass.getDeclaredMethods();
+      if(Arrays.stream(methods).noneMatch(m->m.isAnnotationPresent(Profiled.class))){
+          throw new IllegalArgumentException();
       }
-
-      for (Class<?> kk: kmap.values()
-           ) {
-          Method[] methods = kk.getMethods();
-          for (Method method: methods
-          ) {
-              if(!method.isAnnotationPresent(Profiled.class)){
-                  throw new IllegalArgumentException();
-              }
-          }
-
+     else {
+          proxy = Proxy.newProxyInstance(
+                  delegate.getClass().getClassLoader(),// classloader for whichever interface we want.
+                  new Class<?>[]{klass}, // all the interfaces
+                  new ProfilingMethodInterceptor(delegate, clock, state)); //the handler
       }
-
-
-              proxy= Proxy.newProxyInstance(
-                      klass.getClassLoader(),// classloader for whichever interface we want.
-                      new Class<?>[]{klass}, // all the interfaces
-                      new ProfilingMethodInterceptor(delegate, clock, klass)); //the handler
               return (T) proxy;
-         // }else {
-           //   throw new IllegalArgumentException();
-          //}
-      //} finally {
-        //  if(klass.isAnnotationPresent(Profiled.class)) {
-          //    return (T) proxy;
-
 
  }
 

@@ -22,20 +22,21 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
 
     private final Clock clock;
     private final ZonedDateTime startTime;
-    // private final ZonedDateTime endTime;
     private final Object delegate;
-    private final Class<?> klass;
+    private final ProfilingState state;
+   // private final Class<?> klass;
+
 
 
     // TODO: You will need to add more instance fields and constructor arguments to this class.
 
-    ProfilingMethodInterceptor(Object delegate, Clock clock, Class<?> klass) {
+    ProfilingMethodInterceptor(Object delegate, Clock clock, ProfilingState state) {
         this.clock = Objects.requireNonNull(clock);
         this.startTime = ZonedDateTime.now(clock);
         //this.endTime = ZonedDateTime.now(clock);
         this.delegate = Objects.requireNonNull(delegate);
-        this.klass = Objects.requireNonNull(klass);
-
+        this.state = state;
+       // this.klass = klass;
     }
 
     @Override
@@ -55,7 +56,6 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
         Class declaringclass = method.getDeclaringClass();
 
 
-
        if(declaringclass==Object.class){
             if(method.getName().equals("equals") && args.length>0 && args[0] instanceof Proxy){
                if(Proxy.getInvocationHandler(proxy) instanceof ProfilingMethodInterceptor){
@@ -67,14 +67,19 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
                 return delegate.getClass().getName() + '@' + Integer.toHexString(delegate.hashCode());
             }
         }
+
+
+        Method[] methods = delegate.getClass().getDeclaredMethods();
            try {
-               if (method.isAnnotationPresent(Profiled.class)) {
-                   //start = startTime;
+               if (Arrays.stream(methods).anyMatch(m->m.isAnnotationPresent(Profiled.class))) {
+                   start = startTime;
                    res= method.invoke(delegate, args);
                    //Thread.sleep(1000);
                     ZonedDateTime end = ZonedDateTime.now(clock);
-                    Duration duration = Duration.between(startTime, end);
-                    profilingState.record(klass, method, duration);
+                    Duration duration = Duration.between(start, end);
+                    profilingState.record(delegate.getClass(), method, duration);
+               }else{
+                   res = method.invoke(delegate,args);
                }
 
            }catch (InvocationTargetException |
@@ -90,11 +95,13 @@ final class ProfilingMethodInterceptor implements InvocationHandler {
                // Catch unexpected Exceptions.
               throw exception;
            }finally {
-               if (method.isAnnotationPresent(Profiled.class)) {
+               if (Arrays.stream(methods).anyMatch(m->m.isAnnotationPresent(Profiled.class))) {
+                   start = startTime;
                    res= method.invoke(delegate, args);
+                   //Thread.sleep(1000);
                    ZonedDateTime end = ZonedDateTime.now(clock);
-                   Duration duration = Duration.between(startTime, end);
-                   profilingState.record(klass, method, duration);
+                   Duration duration = Duration.between(start, end);
+                   profilingState.record(delegate.getClass(), method, duration);
                }
            }
     return res;
